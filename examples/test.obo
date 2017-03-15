@@ -1,0 +1,51 @@
+id: R
+is_a: T
+
+id: M
+is_a: L
+is_a: E
+
+id: L
+is_a: I
+
+id: I
+is_a: F
+is_a: H
+
+id: H
+is_a: G
+
+id: E
+is_a: B
+is_a: C
+
+id: F
+is_a: C
+is_a: D
+
+id: G
+is_a: D
+
+id: B
+is_a: A
+
+id: C
+is_a: A
+
+id: D
+is_a: A
+
+id: Y
+is_a: X
+
+id: Z
+is_a: X
+
+id: W
+is_a: Z
+
+id: K
+is_a: W
+
+id: Q
+is_a: W

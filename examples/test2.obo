@@ -1,0 +1,13 @@
+id: D
+is_a: E
+
+id: A
+is_a: B
+is_a: C
+
+id: B
+is_a: E
+
+id: E
+is_a: F
+
