@@ -18,10 +18,10 @@ sub graphseq {
 	my %elms;
 	foreach my $k (keys %geneobo){
 		my $d = scalar @{$geneobo{$k}};
-		push @{$elms{$k}}, ( ${$geneobo{$k}}[0], 0 );
+		push @{$elms{$k}}, ( ${$geneobo{$k}}[0], "GO:0000000" );
 		if($d>1){
 			for(my $i=0; $i<=$d-2; $i++){
-				push @{$elms{${$geneobo{$k}}[$i]}}, ( 0, ${$geneobo{$k}}[$i+1] );
+				push @{$elms{${$geneobo{$k}}[$i]}}, ( "GO:0000000", ${$geneobo{$k}}[$i+1] );
 			}
 		}
 	}
@@ -29,10 +29,10 @@ sub graphseq {
 	foreach my $k (keys %elms){
 		my $n = scalar @{$elms{$k}};
 		if($n > 2){
-			if(${$elms{$k}}[0] eq 0 and ${$elms{$k}}[3] eq 0 ){
+			if(${$elms{$k}}[0] eq "GO:0000000" and ${$elms{$k}}[3] eq "GO:0000000" ){
 				@{$elms{$k}} = ( ${$elms{$k}}[2], ${$elms{$k}}[1] );
 			}
-			if(${$elms{$k}}[1] eq 0 and ${$elms{$k}}[2] eq 0 ){
+			if(${$elms{$k}}[1] eq "GO:0000000" and ${$elms{$k}}[2] eq "GO:0000000" ){
 				@{$elms{$k}} = ( ${$elms{$k}}[0], ${$elms{$k}}[3] );
 			}
 		}
