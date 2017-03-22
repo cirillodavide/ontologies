@@ -1,0 +1,1 @@
+for i in obogenome killer saver; do for j in `ps aux | grep $i | awk '{print $2}'`; do kill -9 $j; done; done

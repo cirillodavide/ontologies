@@ -1,8 +1,10 @@
-# required: PerlIO::gzip; List::MoreUtils; List::Util; Path::Tiny; Graph::Easy
+# required: Getopt::Long; PerlIO::gzip; List::MoreUtils; List::Util; Path::Tiny; Graph::Easy
+# usage perl bin/obo.pl -infile examples/genes_list.txt
 
 use warnings;
 use strict;
 use Graph::Easy;
+use Getopt::Long;
 use Data::Dumper;
 
 
@@ -14,8 +16,16 @@ use lib dirname(dirname abs_path $0) . '/lib';
 
 # take input gene name
 
-print "Gene names / file: ";
-my $input = <>;
+my $input;
+my ($infile);
+my $flagFile = GetOptions ("infile"  => \$infile);
+my $file = $ARGV[0];
+if($infile){
+	$input = $file;
+}else{
+	print "Gene names: ";
+	$input = <>;
+}
 use parseinput::parseinput 'parseinput';
 my $ref_gene = parseinput($input);
 my @gene = @{$ref_gene};
