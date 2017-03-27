@@ -1,2 +1,37 @@
 Killed obogenome at RP11-442O18.2
  (Used mem % = 25.2)
+Killed obogenome at 
+ (Used mem % = 25.1)
+Killed obogenome at 
+ (Used mem % = 26.1)
+Killed obogenome at 
+ (Used mem % = 25.1)
+Killed obogenome at 
+ (Used mem % = 25.3)
+Killed obogenome at 
+ (Used mem % = 27.2)
+Killed obogenome at 
+ (Used mem % = 26.0)
+Killed obogenome at 
+ (Used mem % = 26.9)
+Killed obogenome at 
+ (Used mem % = 25.7)
+Killed obogenome at 
+ (Used mem % = 25.5)
+Killed obogenome at 
+ (Used mem % = 25.7)
+Killed obogenome at 
+ (Used mem % = 25.8)
+Killed obogenome at 
+ (Used mem % = 27.1)
+Out of memory!
+bin/killer.sh: line 7:   678 Killed                  perl bin/killer.pl $file
+Out of memory!
+bin/killer.sh: fork: Cannot allocate memory
+Out of memory!
+Out of memory!
+Out of memory!
+Out of memory!
+shsh::  /usr/bin/ps: /Cusr/bin/grepannot allocate memory: 
+Cannot allocate memory
+bin/saver.sh: fork: Cannot allocate memory

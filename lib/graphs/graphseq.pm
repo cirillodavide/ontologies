@@ -11,9 +11,9 @@ sub graphseq {
 
 	my %seq;
 
-	my ( $ref_roots, $ref_genoobo ) = @_;
+	my ( $ref_roots, $ref_geneobo ) = @_;
 	my @roots = @$ref_roots;
-	my %geneobo = %$ref_genoobo;
+	my %geneobo = %$ref_geneobo;
 
 	my %elms;
 	foreach my $k (keys %geneobo){
@@ -51,7 +51,7 @@ sub graphseq {
 		push @arr, ( $kL, $kR );
 		@arr = grep {$_} @arr;
 
-		while(scalar @arr > 0){
+		while(scalar @arr > 1){
 			$k = shift @arr;
 			if(defined $elms{$k}){
 				my $kL = ${$elms{$k}}[0];
