@@ -43,7 +43,7 @@ use parseobo::geneobo 'geneobo';
 my $ref_geneobo = geneobo(\@gene, \%obo);
 my %geneobo = %{$ref_geneobo};
 
-# build the graph and retrieve the roots
+# retrieve the roots
 
 use graphs::graphobo 'graphobo';
 my $graph = graphobo(\%geneobo);
