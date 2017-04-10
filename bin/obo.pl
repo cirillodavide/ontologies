@@ -17,15 +17,26 @@ use lib dirname(dirname abs_path $0) . '/lib';
 # take input gene name
 
 my $input;
+my $namespace;
 my ($infile);
-my $flagFile = GetOptions ("infile"  => \$infile);
+my ($indomain);
+my $flags = GetOptions ("infile"  => \$infile, "domain"  => \$indomain);
 my $file = $ARGV[0];
+my $domain = $ARGV[1];
 if($infile){
 	$input = $file;
 }else{
 	print "Gene names: ";
 	$input = <>;
 }
+if($indomain){
+	$namespace = $domain;
+}else{
+	print "Domain (eg. biological_process): ";
+	$namespace = <>;
+}
+
+
 use parseinput::parseinput 'parseinput';
 my $ref_gene = parseinput($input);
 my @gene = @{$ref_gene};
@@ -40,7 +51,7 @@ my %obo = %{$ref_obo};
 # map input gene inside go-basic obo
 
 use parseobo::geneobo 'geneobo';
-my $ref_geneobo = geneobo(\@gene, \%obo);
+my $ref_geneobo = geneobo(\@gene, \%obo, $namespace);
 my %geneobo = %{$ref_geneobo};
 
 # retrieve the roots

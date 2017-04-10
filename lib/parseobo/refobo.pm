@@ -23,7 +23,7 @@ sub refobo {
 
 	my %obo;
 	foreach my $para(@para){
-		my (@id, @is_a, @part_of, @regulates, @negatively_regulates, @positively_regulates, @is_obsolete) = (0);
+		my (@id, @is_a, @part_of, @regulates, @negatively_regulates, @positively_regulates, @is_obsolete, @namespace) = (0);
 		$para =~ s/\n/\t/g;
 		(@id) = $para =~ /\s+id:\s+(GO:\d+)\s+/g;
 		(@is_a) = $para =~ /\s+is_a:\s+(GO:\d+)\s+/g;
@@ -38,6 +38,8 @@ sub refobo {
 		push @{$obo{"@id"}{"positively_regulates"}}, @positively_regulates;
 		(@is_obsolete) = $para =~ /\s+is_obsolete:\s+(\S+)\s+/g;
 		push @{$obo{"@id"}{"is_obsolete"}}, @is_obsolete;
+		(@namespace) = $para =~ /\s+namespace:\s+(\S+)\s+/g;
+		push @{$obo{"@id"}{"namespace"}}, @namespace;
 	}
 
 	return \%obo;

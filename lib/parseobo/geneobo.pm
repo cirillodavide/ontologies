@@ -25,8 +25,9 @@ close $in;
 sub geneobo {
 	
 	my %geneobo;
-	my( $ref_inputgene, $ref_obo ) = @_;
+	my( $ref_inputgene, $ref_obo, $namespace) = @_;
 
+    chomp($namespace);
 	my %obo = %{$ref_obo};
 	my @input = @{$ref_inputgene};
 
@@ -34,6 +35,7 @@ sub geneobo {
 		chomp($inputgene);
 		if(defined $gene{$inputgene}){
 			foreach my $go (@{$gene{$inputgene}}){
+			next unless grep{$namespace eq $_}@{$obo{$go}{"namespace"}};
 			foreach my $is_a (@{$obo{$go}{"is_a"}}){ #only is_a relationships
 				push @{$geneobo{$go}}, $is_a unless grep{$is_a eq $_}@{$geneobo{$go}};
 			}
