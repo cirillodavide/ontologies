@@ -1,10 +1,12 @@
-# required: Getopt::Long; PerlIO::gzip; List::MoreUtils; List::Util; Path::Tiny; Graph::Easy
-# usage perl bin/obo.pl -infile examples/genes_list.txt
+# usage: perl bin/obo.pl -infile examples/genes_list.txt -ontology hpo -domain human_phenotype
 
 use warnings;
 use strict;
 use Graph::Easy;
 use Getopt::Long;
+use PerlIO::gzip;
+use List::MoreUtils qw(uniq);
+use Sort::Topological qw(toposort);
 use Data::Dumper;
 
 
@@ -14,64 +16,185 @@ use File::Basename qw(dirname);
 use Cwd qw(abs_path);
 use lib dirname(dirname abs_path $0) . '/lib';
 
-# take input gene name
+#=================
+# input processing
+#=================
 
 my $input;
 my $namespace;
+my $inobo;
 my ($infile);
 my ($indomain);
-my $flags = GetOptions ("infile"  => \$infile, "domain"  => \$indomain);
+my ($inontology);
+my $flags = GetOptions ("infile"  => \$infile, "ontology" => \$inontology, "domain"  => \$indomain,);
 my $file = $ARGV[0];
-my $domain = $ARGV[1];
+my $ontology = $ARGV[1];
+my $domain = $ARGV[2];
 if($infile){
 	$input = $file;
 }else{
 	print "Gene names: ";
 	$input = <>;
 }
+if($inontology){
+	$inobo = $ontology;
+}else{
+	print "Ontology (go or hpo): ";
+	$inobo = <>;
+}
 if($indomain){
 	$namespace = $domain;
 }else{
-	print "Domain (eg. biological_process): ";
+	print "Domain (eg. biological_process or human_phenotype): ";
 	$namespace = <>;
 }
+chomp($input);
+chomp($namespace);
+chomp($inobo);
 
-
-use parseinput::parseinput 'parseinput';
+use parseinput 'parseinput';
 my $ref_gene = parseinput($input);
-my @gene = @{$ref_gene};
+my @genes = @{$ref_gene};
 
-# load go-basic obo
+#==========
+# load obos
+#==========
 
-use parseobo::refobo 'refobo';
-my $obo_file = "res/go-basic.obo"; # go-terms by default
-my $ref_obo = refobo($obo_file);
-my %obo = %{$ref_obo};
+use refobo 'refobo';
+my $obo_file;
+my $ref_obo;
+my %go_obo;
+my %hpo_obo;
 
-# map input gene inside go-basic obo
-
-use parseobo::geneobo 'geneobo';
-my $ref_geneobo = geneobo(\@gene, \%obo, $namespace);
-my %geneobo = %{$ref_geneobo};
-
-# retrieve the roots
-
-use graphs::graphobo 'graphobo';
-my $graph = graphobo(\%geneobo);
-my @roots;
-foreach my $node ($graph->predecessorless_nodes()){
-	$node->name();
-	push @roots, $node->name();
+if($inobo eq "go"){
+    $obo_file = "res/go-basic.obo";
+    $ref_obo = refobo($obo_file);
+    %go_obo = %{$ref_obo};
 }
-print "Number of roots: ",scalar @roots,"\n";
 
-# create the sequences
+if($inobo eq "hpo"){
+    $obo_file = "res/hp.obo";
+    $ref_obo = refobo($obo_file);
+    %hpo_obo = %{$ref_obo};
+}
 
-use graphs::graphseq 'graphseq';
-my $ref_seq = graphseq(\@roots,\%geneobo);
-my %seq = %{$ref_seq};
+#=============
+# genes to obo
+#=============
 
-foreach my $k (sort { $a <=> $b } keys %seq) {
-	my @seq = @{$seq{$k}};
-	print join("\t",$k,join(",",@seq)),"\n";
+$/ = "\n";
+my %gene_to_go;
+my %gene_to_hpo;
+
+if($inobo eq "go"){
+    my $file_go = 'res/goa_human.gaf.gz';
+    open my $in_go, '<:gzip', $file_go or die $!;
+    while(<$in_go>){
+        chomp;
+        next if $_ =~ /^\!/;
+        my ($geneName) = (split/\t/,$_)[2];
+        next unless grep{$geneName eq $_}@genes;
+        my ($go) = $_ =~ /(GO:\d+)/g; # ignoring colocalizes_with
+        my ($ec) = (split/\t/,$_)[6];
+        next if !grep{$ec eq $_} qw/EXP IDA IPI IMP IGI IEP/; # only experimental evidence codes
+        push @{$gene_to_go{$geneName}}, $go;
+        @{$gene_to_go{$geneName}} = uniq @{$gene_to_go{$geneName}};
+    }
+    close $in_go;
+}
+
+if($inobo eq "hpo"){
+    my $file_hpo = 'res/OMIM_ALL_FREQUENCIES_diseases_to_genes_to_phenotypes.txt';
+    open my $in_hpo, $file_hpo or die $!;
+    while(<$in_hpo>){
+        chomp;
+        next if $. < 2;
+        my ($geneName, $hp) = (split/\t/,$_)[1,3];
+        next unless grep{$geneName eq $_}@genes;
+        push @{$gene_to_hpo{$geneName}}, $hp;
+        @{$gene_to_hpo{$geneName}} = uniq @{$gene_to_hpo{$geneName}};
+    }
+    close $in_hpo;
+}
+
+#===================
+# GO terms sequences
+#===================
+
+if($inobo eq "go"){
+	my $tag = $namespace;
+	my %out;
+	my %go;
+	my $cnt = 0;
+	foreach my $gene (sort @genes){
+		$cnt++;
+		foreach my $go (@{$gene_to_go{$gene}}){
+			$go{$go} = 1;
+		}
+	}
+	my $ref_sorted = myHoA2seq(\%go, $tag, \%go_obo);
+	my %sorted = %$ref_sorted;
+	foreach my $k (sort { $a <=> $b } keys %sorted){
+		print join("\t",$k,$sorted{$k}),"\n";
+	}
+}
+#====================
+# HPO terms sequences
+#====================
+
+if($inobo eq "hpo"){
+	my $tag = $namespace;
+	my %out;
+	my %hpo;
+	my $cnt = 0;
+	foreach my $gene (sort @genes){
+		$cnt++;
+		foreach my $hpo (@{$gene_to_hpo{$gene}}){
+			$hpo{$hpo} = 1;
+		}
+	}
+	my $ref_sorted = myHoA2seq(\%hpo, $tag, \%hpo_obo);
+	my %sorted = %$ref_sorted;
+	foreach my $k (sort { $a <=> $b } keys %sorted){
+		print join("\t",$k,$sorted{$k}),"\n";
+	}	
+}
+
+##############
+
+sub myHoA2seq{
+
+	use graphobo 'graphobo';
+	use graphseq 'graphseq';
+
+	my ( $ref_terms, $tag , $ref_obo ) = @_;
+	my %terms = %$ref_terms;
+	my @terms = keys %terms;
+	my %obo = %$ref_obo;
+
+	my %children;
+	my @roots;
+	my %out;
+	foreach my $elm (@terms){
+		next unless defined $obo{$elm}{$tag};
+		@{$children{$elm}} = @{$obo{$elm}{$tag}};
+		@{$children{$elm}} = uniq(@{$children{$elm}});
+		my $graph = graphobo(\%children);
+		foreach my $node ($graph->predecessorless_nodes()){
+			$node->name();
+			push @roots, $node->name() unless grep{$node->name eq $_}@roots;
+		}
+	}
+
+	my $ref_seq = graphseq(\@roots,\%obo,$tag);
+	my %seq = %{$ref_seq};
+	foreach my $k (sort { $a <=> $b } keys %seq) {
+		my @sorted;
+		foreach my $v (@{$seq{$k}}){
+			push @sorted, $v if $v;
+		}
+	$out{$k} = "@sorted";
+	}
+	print "Numer of roots: ".scalar (keys %seq)." \n";
+	return \%out;
 }
